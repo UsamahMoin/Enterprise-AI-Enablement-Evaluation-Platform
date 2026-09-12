@@ -56,6 +56,10 @@ class WorkflowVersion(UUIDPrimaryKey, TimestampMixin, Base):
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     prompt_template: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String(80), nullable=False, default="gpt-4.1-mini")
+    # Provider to route this version to. NULL uses the deployment default.
+    # Pinning a version to "local" is how a workflow handling RESTRICTED data
+    # is kept on infrastructure the organisation controls.
+    provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
     temperature: Mapped[float] = mapped_column(Float, nullable=False, default=0.2)
     # Per-workflow rubric: dimension weights + deterministic check config.
     evaluation_rubric: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)

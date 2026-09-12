@@ -10,7 +10,12 @@ from app.core.enums import ExecutionStatus
 from app.models.execution import EvaluationResult, Execution
 from app.models.user import User
 from app.models.workflow import Workflow, WorkflowVersion
-from app.services.ai import GenerationRequest, estimate_cost, get_provider
+from app.services.ai import (
+    GenerationRequest,
+    LocalProviderUnavailable,
+    estimate_cost,
+    get_provider,
+)
 from app.services.evaluation import evaluate
 from app.services.governance import GovernanceDecision, evaluate_request
 
@@ -21,6 +26,10 @@ class ExecutionBlocked(Exception):
     def __init__(self, decision: GovernanceDecision) -> None:
         super().__init__(decision.reason)
         self.decision = decision
+
+
+class ProviderUnavailable(Exception):
+    """The provider this workflow is routed to could not be reached."""
 
 
 def render_prompt(template: str, inputs: dict) -> str:
@@ -65,8 +74,14 @@ async def run_workflow(
     run_evaluation: bool = True,
 ) -> tuple[Execution, GovernanceDecision]:
     """Execute one workflow end to end and persist the result."""
-    provider = get_provider()
     version = version or await get_active_version(db, workflow)
+    # A version may be pinned to a provider - that is how a workflow handling
+    # sensitive data is kept on self-hosted infrastructure regardless of what
+    # the deployment default is.
+    try:
+        provider = get_provider(version.provider) if version.provider else get_provider()
+    except (ValueError, LocalProviderUnavailable) as exc:
+        raise ProviderUnavailable(str(exc)) from exc
 
     # 1. Governance pre-flight -------------------------------------------
     decision = await evaluate_request(
@@ -134,7 +149,7 @@ async def run_workflow(
     execution.output_tokens = response.output_tokens
     execution.latency_ms = response.latency_ms
     execution.estimated_cost = estimate_cost(
-        response.model, response.input_tokens, response.output_tokens
+        response.model, response.input_tokens, response.output_tokens, provider.name
     )
     execution.status = ExecutionStatus.COMPLETED
     db.add(execution)
@@ -152,6 +167,8 @@ async def run_workflow(
         db.add(
             EvaluationResult(
                 execution_id=execution.id,
+                safety_checked=outcome.safety_checked,
+                evaluation_provider=outcome.evaluation_provider,
                 relevance=outcome.relevance,
                 completeness=outcome.completeness,
                 groundedness=outcome.groundedness,

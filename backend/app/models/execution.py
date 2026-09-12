@@ -64,11 +64,15 @@ class EvaluationResult(UUIDPrimaryKey, TimestampMixin, Base):
     format_compliance: Mapped[float | None] = mapped_column(Float, nullable=True)
     clarity: Mapped[float | None] = mapped_column(Float, nullable=True)
     safety_passed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # False when no provider in the chain could moderate the output. Kept
+    # separate from safety_passed so "not checked" is never read as "passed".
+    safety_checked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     overall_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
 
     deterministic_checks: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     evaluation_model: Mapped[str] = mapped_column(String(80), nullable=False, default="")
+    evaluation_provider: Mapped[str] = mapped_column(String(20), nullable=False, default="")
     evaluation_reasoning: Mapped[str] = mapped_column(Text, nullable=False, default="")
     rubric_used: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 

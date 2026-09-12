@@ -29,11 +29,19 @@ def compute_overall(
     weights: dict[str, float] | None = None,
     *,
     safety_passed: bool = True,
+    safety_checked: bool = True,
 ) -> float:
-    """Combine available dimension scores into a 0-100 overall score."""
+    """Combine available dimension scores into a 0-100 overall score.
+
+    When safety could not be checked - no provider in the chain offers
+    moderation - the dimension is dropped and the remaining weights are
+    renormalised. Awarding full safety marks for a check that never ran would
+    quietly inflate the score of exactly the configuration that deserves the
+    most scrutiny.
+    """
     weights = normalise_weights(weights)
     values = dict(scores)
-    values["safety"] = 100.0 if safety_passed else 0.0
+    values["safety"] = (100.0 if safety_passed else 0.0) if safety_checked else None
 
     applicable = {
         key: weight
