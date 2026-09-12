@@ -4,9 +4,8 @@ Revision ID: 730ade2167f4
 Revises: 
 Create Date: 2026-09-12 13:47:16.590842
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = '730ade2167f4'
 down_revision = None
