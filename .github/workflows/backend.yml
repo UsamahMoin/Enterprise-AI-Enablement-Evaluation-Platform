@@ -1,0 +1,48 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest -q
+
+      - name: Verify migrations apply cleanly
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./ci.db
+        run: alembic upgrade head
+
+      - name: Verify the demo dataset seeds
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./ci.db
+          AI_PROVIDER: stub
+        run: python -m app.seed
+
+      - name: Run the evaluation benchmark
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./ci.db
+          AI_PROVIDER: stub
+        run: python -m app.benchmark --workflow generate_unit_tests
