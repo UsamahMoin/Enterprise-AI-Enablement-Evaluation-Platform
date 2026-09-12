@@ -74,8 +74,14 @@ async def evaluate_request(
     inputs: dict,
     provider: AIProvider,
     acknowledge_warnings: bool = False,
+    record_violations: bool = True,
 ) -> GovernanceDecision:
-    """Run the full pre-flight pipeline for one execution request."""
+    """Run the full pre-flight pipeline for one execution request.
+
+    `record_violations=False` runs the same checks without writing audit rows,
+    which is what benchmark runs need: a synthetic case that is *supposed* to
+    be blocked is not a real policy breach by a real person.
+    """
     policies = await load_policies(db)
     decision = GovernanceDecision(
         requires_human_review=workflow.requires_human_review
@@ -113,7 +119,8 @@ async def evaluate_request(
                 f"This workflow is approved for {allowed_classification.value} data only, "
                 "so the request was not sent to the AI provider."
             )
-            await record_violation(db, decision, user=user, workflow=workflow)
+            if record_violations:
+                await record_violation(db, decision, user=user, workflow=workflow)
             return decision
 
         for detection in detections:
@@ -138,7 +145,8 @@ async def evaluate_request(
                 "Input was flagged by the content moderation check "
                 f"({', '.join(result.categories) or 'policy violation'})."
             )
-            await record_violation(db, decision, user=user, workflow=workflow)
+            if record_violations:
+                await record_violation(db, decision, user=user, workflow=workflow)
             return decision
 
     # 4. Warnings acknowledgement ----------------------------------------

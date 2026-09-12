@@ -71,6 +71,10 @@ class StubProvider(AIProvider):
         out: dict = {}
         for key, spec in properties.items():
             kind = spec.get("type", "string")
+            if isinstance(kind, list):
+                # Nullable schemas arrive as ["number", "null"]; synthesise the
+                # real type rather than falling through to a string.
+                kind = next((item for item in kind if item != "null"), "string")
             if kind == "array":
                 out[key] = self._synth_array(key, spec, first_line, rng)
             elif kind in ("number", "integer"):
@@ -98,7 +102,10 @@ class StubProvider(AIProvider):
                         obj[field_name] = f"{field_name.replace('_', ' ').capitalize()} {index + 1}"
                 items.append(obj)
             return items
-        return [f"{key.replace('_', ' ').capitalize()} point {i + 1}: {source[:60]}" for i in range(count)]
+        return [
+            f"{key.replace('_', ' ').capitalize()} point {i + 1}: {source[:60]}"
+            for i in range(count)
+        ]
 
     def _synth_text(self, request: GenerationRequest, rng: random.Random) -> str:
         task = request.metadata.get("workflow_slug", "task")
