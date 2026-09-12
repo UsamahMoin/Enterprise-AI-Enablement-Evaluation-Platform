@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eail_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-eail}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eail} -d ${POSTGRES_DB:-eail}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eail}:${POSTGRES_PASSWORD:-eail_dev_password}@db:5432/${POSTGRES_DB:-eail}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo1234}
+      AI_PROVIDER: ${AI_PROVIDER:-stub}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      EVALUATION_MODEL: ${EVALUATION_MODEL:-gpt-4.1-mini}
+      APP_ENV: ${APP_ENV:-development}
+      SEED_ON_STARTUP: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.seed &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
