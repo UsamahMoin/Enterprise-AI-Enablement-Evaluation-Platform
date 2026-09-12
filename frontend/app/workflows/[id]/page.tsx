@@ -77,6 +77,10 @@ function RunnerBody({ workflow }: { workflow: WorkflowDetail }) {
             detections: [],
             warnings: [],
             requires_human_review: false,
+            provider: result.provider,
+            effective_classification: "",
+            moderation_checked: true,
+            moderation_provider: "",
           },
         );
       } else {

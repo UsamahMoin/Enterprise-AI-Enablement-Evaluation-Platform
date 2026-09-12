@@ -9,6 +9,7 @@ import type {
   GovernancePolicy,
   LoginResponse,
   PolicyViolation,
+  ProviderSettings,
   QualitySummary,
   TrainingModule,
   User,
@@ -160,6 +161,7 @@ export const api = {
       body: JSON.stringify(body),
     }),
   violations: (limit = 50) => request<PolicyViolation[]>(`/admin/violations?limit=${limit}`),
+  providers: () => request<ProviderSettings>("/admin/providers"),
 
   trainingModules: () => request<TrainingModule[]>("/training/modules"),
   completeModule: (id: string) =>

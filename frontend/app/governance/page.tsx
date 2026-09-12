@@ -45,6 +45,7 @@ function Governance() {
     () => (user?.system_role === "ADMIN" ? api.policies() : Promise.resolve([])),
     [user?.system_role],
   );
+  const providers = useAsync(() => api.providers(), []);
 
   return (
     <>
@@ -93,6 +94,82 @@ function Governance() {
           </ol>
         </Card>
       </div>
+
+      <Card
+        className="mb-6"
+        title="Model providers"
+        subtitle="Providers are not interchangeable in the ways governance cares about. These declarations are what the pipeline reads — no vendor name is hard-coded in the rules."
+      >
+        {providers.loading && <Loading />}
+        {providers.error && <ErrorBox message={providers.error} />}
+        {providers.data && (
+          <>
+            <Table
+              headers={["Provider", "Data stays in-house", "Max data class", "Moderation", "Role", "Status"]}
+            >
+              {providers.data.providers.map((provider) => (
+                <tr key={provider.name}>
+                  <td className="py-3 pr-4">
+                    <span className="font-medium">{provider.name}</span>
+                    <span className="block max-w-md text-xs text-muted">
+                      {provider.description || provider.error}
+                    </span>
+                  </td>
+                  <td className="py-3 pr-4 text-sm">
+                    {provider.keeps_data_in_house ? (
+                      <span className="text-emerald-700">Yes</span>
+                    ) : (
+                      <span className="text-amber-800">No — data egress</span>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4 text-sm">{provider.max_data_classification || "—"}</td>
+                  <td className="py-3 pr-4 text-sm">
+                    {provider.supports_moderation ? (
+                      <span className="text-emerald-700">Available</span>
+                    ) : (
+                      <span className="text-amber-800">None</span>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div className="flex flex-wrap gap-1">
+                      {provider.is_default && <Badge>Generation</Badge>}
+                      {provider.is_judge && <Badge>Evaluation</Badge>}
+                    </div>
+                  </td>
+                  <td className="py-3">
+                    {!provider.configured ? (
+                      <Badge tone="border-line bg-canvas text-muted">Not configured</Badge>
+                    ) : provider.reachable === false ? (
+                      <Badge tone="border-red-200 bg-red-50 text-red-800">Unreachable</Badge>
+                    ) : (
+                      <Badge tone="border-emerald-200 bg-emerald-50 text-emerald-800">Ready</Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </Table>
+
+            <div className="mt-4 rounded-lg border border-line bg-canvas p-4 text-xs text-muted">
+              <p>
+                The limit applied to a request is the{" "}
+                <strong className="text-ink">stricter</strong> of what the workflow is approved for
+                and what its provider may receive. A hosted provider is an egress of data, so
+                routing a workflow to a self-hosted model is what raises its ceiling — not editing
+                the workflow.
+              </p>
+              <p className="mt-2">
+                Moderation falls back to{" "}
+                <span className="font-mono text-ink">{providers.data.moderation_provider}</span>.
+                When no provider can check the input, the result is recorded as{" "}
+                <strong className="text-ink">not checked</strong>, never as passed
+                {providers.data.moderation_fail_closed
+                  ? ", and the request is rejected (fail-closed is on)."
+                  : ". Set MODERATION_FAIL_CLOSED=true to reject unchecked input instead."}
+              </p>
+            </div>
+          </>
+        )}
+      </Card>
 
       {user?.system_role === "ADMIN" && (
         <Card className="mb-6" title="Policies" subtitle="Changes take effect on the next run.">

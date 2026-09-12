@@ -70,6 +70,7 @@ export interface WorkflowVersion {
   system_prompt: string;
   prompt_template: string;
   model: string;
+  provider: string | null;
   temperature: number;
   evaluation_rubric: Record<string, unknown>;
   changelog: string;
@@ -96,9 +97,11 @@ export interface Evaluation {
   format_compliance: number | null;
   clarity: number | null;
   safety_passed: boolean;
+  safety_checked: boolean;
   overall_score: number;
   deterministic_checks: DeterministicCheck[];
   evaluation_model: string;
+  evaluation_provider: string;
   evaluation_reasoning: string;
 }
 
@@ -128,6 +131,10 @@ export interface GovernanceResult {
   detections: GovernanceDetection[];
   warnings: string[];
   requires_human_review: boolean;
+  provider: string;
+  effective_classification: string;
+  moderation_checked: boolean;
+  moderation_provider: string;
 }
 
 export interface Execution {
@@ -287,6 +294,28 @@ export interface AdminOverview {
   top_workflows: WorkflowQuality[];
   needs_attention: WorkflowQuality[];
   blocked_requests: number;
+}
+
+export interface ProviderInfo {
+  name: string;
+  configured: boolean;
+  supports_moderation: boolean;
+  max_data_classification: string;
+  keeps_data_in_house: boolean;
+  description: string;
+  error: string;
+  is_default: boolean;
+  is_judge: boolean;
+  reachable: boolean | null;
+  models: string[];
+}
+
+export interface ProviderSettings {
+  generation_provider: string;
+  evaluation_provider: string;
+  moderation_provider: string;
+  moderation_fail_closed: boolean;
+  providers: ProviderInfo[];
 }
 
 export interface TrainingModule {

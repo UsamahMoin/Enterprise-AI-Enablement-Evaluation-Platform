@@ -20,12 +20,20 @@ export function EvaluationPanel({ execution }: { execution: Execution }) {
         <span className="text-sm text-muted">/ 100 overall</span>
         <span
           className={`ml-auto rounded-md border px-2 py-0.5 text-xs font-medium ${
-            evaluation.safety_passed
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-red-200 bg-red-50 text-red-800"
+            !evaluation.safety_checked
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : evaluation.safety_passed
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-red-200 bg-red-50 text-red-800"
           }`}
+          title={
+            evaluation.safety_checked
+              ? undefined
+              : "No provider in the chain offers moderation, so this output was not screened."
+          }
         >
-          Safety {evaluation.safety_passed ? "PASS" : "FAIL"}
+          Safety{" "}
+          {!evaluation.safety_checked ? "NOT CHECKED" : evaluation.safety_passed ? "PASS" : "FAIL"}
         </span>
       </div>
 
@@ -36,6 +44,15 @@ export function EvaluationPanel({ execution }: { execution: Execution }) {
         <ScoreBar label="Groundedness" value={evaluation.groundedness} />
         <ScoreBar label="Format compliance" value={evaluation.format_compliance} />
       </div>
+
+      {!evaluation.safety_checked && (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          Safety was <strong>not checked</strong>: the provider handling this run has no
+          moderation endpoint and no fallback moderator is configured. The dimension is dropped
+          from the overall score rather than awarded full marks, so an unscreened run cannot
+          outscore one that was screened.
+        </p>
+      )}
 
       {evaluation.groundedness === null && (
         <p className="mt-3 text-xs text-muted">
@@ -91,8 +108,13 @@ export function EvaluationPanel({ execution }: { execution: Execution }) {
         </div>
       </dl>
       <p className="mt-3 text-xs text-muted">
-        Scored by {evaluation.evaluation_model || "the configured evaluation model"}. A model judge
-        is a signal, not ground truth — which is why your decision is recorded separately.
+        Scored by {evaluation.evaluation_model || "the configured evaluation model"}
+        {evaluation.evaluation_provider ? ` via the ${evaluation.evaluation_provider} provider` : ""}
+        {evaluation.evaluation_provider && evaluation.evaluation_provider !== execution.provider
+          ? " — an independent judge, since a model grading its own output shows self-preference bias"
+          : ""}
+        . A model judge is a signal, not ground truth — which is why your decision is recorded
+        separately.
       </p>
     </Card>
   );
