@@ -90,7 +90,7 @@ DETECTORS: list[Detector] = [
     ),
 ]
 
-_CLASSIFICATION_RANK = {
+CLASSIFICATION_RANK = {
     DataClassification.PUBLIC: 0,
     DataClassification.INTERNAL: 1,
     DataClassification.CONFIDENTIAL: 2,
@@ -147,7 +147,7 @@ def exceeds_classification(
     detection: Detection, allowed: DataClassification
 ) -> bool:
     """True when the workflow is not cleared to receive this data category."""
-    return _CLASSIFICATION_RANK[detection.min_classification] > _CLASSIFICATION_RANK[allowed]
+    return CLASSIFICATION_RANK[detection.min_classification] > CLASSIFICATION_RANK[allowed]
 
 
 def redact(text: str) -> str:
