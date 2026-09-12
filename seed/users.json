@@ -1,0 +1,68 @@
+{
+  "organization": {"name": "Acme Corp", "slug": "acme"},
+  "departments": [
+    {"name": "Engineering", "headcount": 34, "roles": ["Developer"]},
+    {"name": "Customer Support", "headcount": 31, "roles": ["Support"]},
+    {"name": "Marketing", "headcount": 25, "roles": ["Marketing"]},
+    {"name": "Operations", "headcount": 22, "roles": ["Manager"]},
+    {"name": "Finance", "headcount": 20, "roles": ["Finance"]},
+    {"name": "Human Resources", "headcount": 18, "roles": ["HR"]}
+  ],
+  "demo_accounts": [
+    {
+      "email": "employee@demo.com",
+      "name": "Alex Rivera",
+      "department": "Engineering",
+      "job_role": "Developer",
+      "system_role": "EMPLOYEE"
+    },
+    {
+      "email": "manager@demo.com",
+      "name": "Priya Nandakumar",
+      "department": "Engineering",
+      "job_role": "Manager",
+      "system_role": "MANAGER"
+    },
+    {
+      "email": "admin@demo.com",
+      "name": "Dana Whitfield",
+      "department": "Operations",
+      "job_role": "Manager",
+      "system_role": "ADMIN"
+    },
+    {
+      "email": "support@demo.com",
+      "name": "Marcus Bell",
+      "department": "Customer Support",
+      "job_role": "Support",
+      "system_role": "EMPLOYEE"
+    },
+    {
+      "email": "finance@demo.com",
+      "name": "Yuki Tanaka",
+      "department": "Finance",
+      "job_role": "Finance",
+      "system_role": "EMPLOYEE"
+    },
+    {
+      "email": "hr@demo.com",
+      "name": "Sofia Moreau",
+      "department": "Human Resources",
+      "job_role": "HR",
+      "system_role": "EMPLOYEE"
+    }
+  ],
+  "given_names": [
+    "Amara", "Benedict", "Camila", "Dmitri", "Elena", "Farid", "Grace", "Hassan",
+    "Ingrid", "Jonas", "Keiko", "Liam", "Maya", "Niall", "Olu", "Petra",
+    "Quinn", "Rosa", "Samir", "Tomas", "Ulla", "Viktor", "Wren", "Xiomara",
+    "Yusuf", "Zara", "Adaeze", "Bruno", "Chandra", "Deniz", "Esther", "Felix",
+    "Gita", "Hugo", "Iris", "Jae", "Kofi", "Lucia", "Mateo", "Nadia"
+  ],
+  "family_names": [
+    "Adeyemi", "Bergstrom", "Castellanos", "Dlamini", "Eriksen", "Ferreira",
+    "Gallagher", "Haddad", "Ibrahim", "Jankowski", "Kowalczyk", "Lindqvist",
+    "Mbeki", "Novak", "Okonkwo", "Petrov", "Quintero", "Rasmussen", "Sasaki",
+    "Thorne", "Ueda", "Vasquez", "Walsh", "Xu", "Yilmaz", "Zhang"
+  ]
+}

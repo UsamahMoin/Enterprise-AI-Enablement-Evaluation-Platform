@@ -1,0 +1,65 @@
+[
+  {
+    "slug": "ai-fundamentals",
+    "title": "AI Fundamentals",
+    "summary": "What a language model is doing when it answers, and what that implies for your work.",
+    "minutes": 6,
+    "order_index": 1,
+    "target_roles": [],
+    "body": "A language model predicts likely continuations of text. It is not looking anything up unless you give it something to look at, and it has no way to tell you how confident it is.\n\nThree consequences for your day:\n\n1. **Fluency is not accuracy.** A confident, well-written answer and a wrong one look identical. Your judgement is the check, not the tone of the response.\n2. **Context is everything.** The model only knows what is in the prompt plus what it learned in training. If a policy, a figure or a constraint matters, paste it in.\n3. **Output varies.** The same prompt can produce different answers. That is why this platform versions prompts and evaluates output rather than assuming a good result repeats.\n\nWhat this platform adds on top of a chat box: an approved workflow carries a tested prompt, a rubric, a risk classification and a record of how well it has actually performed."
+  },
+  {
+    "slug": "prompt-engineering",
+    "title": "Prompt Engineering",
+    "summary": "The four things that reliably improve a prompt, and the one that usually does not.",
+    "minutes": 7,
+    "order_index": 2,
+    "target_roles": [],
+    "body": "**What reliably helps**\n\n1. **State the role and the reader.** 'A human agent will review this before sending' changes the output more than 'be professional'.\n2. **Give the source material.** Groundedness is only possible when there is something to be grounded in.\n3. **Name the format.** 'Exactly these headings' or a JSON shape makes output machine-checkable, which is what lets this platform score it automatically.\n4. **Say what not to do.** 'Do not invent an owner; use null' removes a whole class of error.\n\n**What usually does not help**\n\nPiling on adjectives. 'Excellent, world-class, highly detailed' adds length, not quality.\n\n**How to tell the difference**\n\nDon't argue about it - version the prompt and compare the scores. Every workflow here keeps its prompt history, so a change that sounded better but scored worse is visible."
+  },
+  {
+    "slug": "ai-assisted-development",
+    "title": "AI-Assisted Development",
+    "summary": "Where generated code earns its place, and where it quietly costs you time.",
+    "minutes": 6,
+    "order_index": 3,
+    "target_roles": ["Developer"],
+    "body": "**Good uses**\n\n- Test scaffolding you were going to write anyway\n- Explaining an unfamiliar module before you change it\n- A first review pass that catches the obvious before a colleague spends attention\n\n**Poor uses**\n\n- Merging generated tests without reading them. A test that asserts the current behaviour, including the bug, passes forever and protects nothing.\n- Treating generated coverage as evidence of correctness. Coverage measures lines executed, not behaviour verified.\n- Pasting proprietary code into tools that are not approved. Use the workflows here; they record what was sent and enforce the data classification.\n\n**The habit worth building**\n\nRead generated code as if a stranger opened a pull request. That is exactly what happened."
+  },
+  {
+    "slug": "evaluating-ai-outputs",
+    "title": "Evaluating AI Outputs",
+    "summary": "How this platform scores output, and why no single layer is trusted alone.",
+    "minutes": 8,
+    "order_index": 4,
+    "target_roles": [],
+    "body": "Three layers run on different trade-offs.\n\n**Level 1 - deterministic checks.** Ordinary code: is this valid JSON, are the required sections present, does the Python parse, is a prohibited term present. Free, instant, perfectly reproducible. It cannot tell you whether the content is any good.\n\n**Level 2 - model-as-judge.** A second model scores the output against a rubric and returns structured JSON. It scales to every execution and captures things code cannot. It is also a language model, with the same failure modes as the one it is grading.\n\n**Level 3 - human review.** Your approve, edit or reject. Slow, expensive, and the only layer that knows what you actually needed.\n\nThe quality dashboard deliberately shows the model score next to the human approval rate. When those two diverge, the rubric is usually wrong - which is information you only get by keeping both."
+  },
+  {
+    "slug": "responsible-ai",
+    "title": "Responsible AI",
+    "summary": "Risk tiers, human oversight, and the decisions that are not the model's to make.",
+    "minutes": 6,
+    "order_index": 5,
+    "target_roles": [],
+    "body": "Every workflow carries a risk classification.\n\n- **LOW** - a wrong answer costs you a few minutes. Summaries, drafts, scaffolding.\n- **MEDIUM** - a wrong answer reaches someone outside your team. Customer replies, job postings.\n- **HIGH** - a wrong answer affects a person or a financial statement. Human review is required before the output is used.\n- **PROHIBITED** - the platform will not run it at all.\n\nThe prohibited tier is the important one. Automatically rejecting a job applicant is registered in this catalogue precisely so the boundary is visible and auditable - it is blocked before generation, every time.\n\nThe underlying rule: a model can draft, summarise, classify and explain. It does not get to make an adverse decision about a person."
+  },
+  {
+    "slug": "working-with-sensitive-data",
+    "title": "Working With Sensitive Data",
+    "summary": "What not to paste, what the platform catches, and what it cannot catch.",
+    "minutes": 5,
+    "order_index": 6,
+    "target_roles": [],
+    "body": "Before a workflow runs, your input is scanned for government ID numbers, payment card numbers, API keys and secrets, email addresses and phone numbers. Each workflow is approved for a maximum data classification; if a detected category exceeds it, the request is blocked and never leaves the platform.\n\nWhen a request is blocked, the input is not stored. The audit record keeps the category and the count - 'one SSN-shaped value in the notes field' - never the value itself.\n\n**What this does not do**\n\nPattern matching catches structured identifiers. It does not catch a paragraph that identifies someone by circumstance, a screenshot, or a spreadsheet pasted as text with the sensitive column intact.\n\nThe control is a backstop. The judgement is yours: send the minimum the task actually needs."
+  },
+  {
+    "slug": "human-review",
+    "title": "Human Review",
+    "summary": "What approve, needs editing and reject each mean, and why the distinction matters.",
+    "minutes": 4,
+    "order_index": 7,
+    "target_roles": [],
+    "body": "Your decision on an output is the only signal in the system that reflects what you actually needed.\n\n- **Approve** - you would use this as it stands. This is what counts toward effective adoption and estimated time saved.\n- **Needs editing** - useful, but you changed it. This is the most informative verdict: it means the workflow is close, and the comment tells whoever owns the prompt what to fix.\n- **Reject** - you would not use it.\n\nApprovals are credited against a per-workflow manual-time baseline, which is why the figure is labelled *estimated* time saved rather than a productivity gain. Volume of prompts is not the measure. Work someone accepted is."
+  }
+]

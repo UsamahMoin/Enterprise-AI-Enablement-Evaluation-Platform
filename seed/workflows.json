@@ -1,0 +1,1331 @@
+[
+  {
+    "slug": "generate_unit_tests",
+    "name": "Generate Unit Tests",
+    "description": "Generate unit tests for submitted code, including edge and error cases.",
+    "department": "Engineering",
+    "target_role": "Developer",
+    "task_type": "code",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "code",
+    "estimated_manual_minutes": 20,
+    "estimated_assisted_minutes": 5,
+    "input_schema": [
+      {
+        "name": "language",
+        "label": "Language",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Python",
+          "TypeScript",
+          "Java",
+          "Go"
+        ]
+      },
+      {
+        "name": "framework",
+        "label": "Testing framework",
+        "type": "select",
+        "required": true,
+        "options": [
+          "pytest",
+          "unittest",
+          "Jest",
+          "Vitest",
+          "JUnit"
+        ]
+      },
+      {
+        "name": "code",
+        "label": "Paste your code",
+        "type": "code",
+        "required": true,
+        "placeholder": "def calculate_total(items):\n    ..."
+      },
+      {
+        "name": "constraints",
+        "label": "Constraints",
+        "type": "textarea",
+        "required": false,
+        "placeholder": "No external dependencies; explain edge cases.",
+        "help_text": "Optional. Anything the generated tests must or must not do."
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Generating an initial test scaffold for new code",
+        "Surfacing edge cases you have not thought of",
+        "Adding regression tests around a bug you just fixed"
+      ],
+      "when_not_to_use": [
+        "Merging generated tests without reading them",
+        "Treating generated coverage as proof the code is correct",
+        "Pasting proprietary code into tools outside the approved platform"
+      ],
+      "good_input_example": "A single self-contained function plus the constraint 'no external dependencies, cover empty input and negative values'.",
+      "poor_input_example": "'Write tests for my repo' with no code attached."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "You are a senior engineer. Write unit tests for the code the user provides.",
+        "prompt_template": "Language: $language\nFramework: $framework\n\nCode:\n$code\n\nConstraints: $constraints",
+        "temperature": 0.3,
+        "changelog": "Initial version.",
+        "is_active": false,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.35,
+            "completeness": 0.25,
+            "format_compliance": 0.3,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_code": "python",
+            "max_chars": 6000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "clarity"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      },
+      {
+        "version": 2,
+        "system_prompt": "You are a senior engineer writing tests that will be reviewed by a human before merge. Produce runnable unit tests in the requested framework. Cover the happy path, boundary conditions and error handling.",
+        "prompt_template": "Language: $language\nFramework: $framework\n\nCode under test:\n$code\n\nConstraints: $constraints\n\nReturn a single fenced code block containing the tests.",
+        "temperature": 0.2,
+        "changelog": "Named the reviewer, required explicit coverage of boundary and error cases, and pinned the output to one fenced code block.",
+        "is_active": false,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.3,
+            "completeness": 0.25,
+            "format_compliance": 0.35,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_code": "python",
+            "expect_test_concepts": true,
+            "max_chars": 6000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "clarity"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      },
+      {
+        "version": 3,
+        "system_prompt": "You are a senior engineer writing tests that a human will review before merge.\n\nRules:\n- Emit exactly one fenced code block containing runnable tests in the requested framework.\n- Include at least one happy-path test, one boundary test (empty, zero, maximum) and one error-path test.\n- Do not invent functions or imports that the supplied code does not define.\n- After the code block, list the edge cases you covered in at most four bullet points.\n- Honour every stated constraint.",
+        "prompt_template": "Language: $language\nFramework: $framework\n\nCode under test:\n$code\n\nConstraints: $constraints",
+        "temperature": 0.2,
+        "changelog": "Added an explicit anti-hallucination rule (no invented imports), required three named test categories, and moved the edge-case explanation after the code block so the block stays machine-checkable.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.3,
+            "completeness": 0.25,
+            "format_compliance": 0.35,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_code": "python",
+            "expect_test_concepts": true,
+            "max_chars": 6000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "clarity"
+          ],
+          "criteria": [
+            "Tests must reference only functions defined in the supplied code.",
+            "Assertions must be specific, not merely 'assert result'."
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "explain_code",
+    "name": "Explain Unfamiliar Code",
+    "description": "Explain what a block of unfamiliar code does, its inputs, outputs and risks.",
+    "department": "Engineering",
+    "target_role": "Developer",
+    "task_type": "analysis",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 15,
+    "estimated_assisted_minutes": 4,
+    "input_schema": [
+      {
+        "name": "code",
+        "label": "Code",
+        "type": "code",
+        "required": true
+      },
+      {
+        "name": "audience",
+        "label": "Explain for",
+        "type": "select",
+        "required": true,
+        "options": [
+          "A new joiner",
+          "A reviewer",
+          "A non-engineer stakeholder"
+        ]
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Onboarding onto an unfamiliar service",
+        "Reviewing a dependency before adopting it"
+      ],
+      "when_not_to_use": [
+        "Accepting the explanation without reading the code yourself"
+      ],
+      "good_input_example": "A single module with its imports, plus the audience.",
+      "poor_input_example": "A stack trace with no surrounding code."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "You explain code to the stated audience. Cover: what it does, inputs, outputs, side effects and anything that looks risky. Say plainly when the supplied code is insufficient to answer.",
+        "prompt_template": "Audience: $audience\n\nCode:\n$code",
+        "temperature": 0.3,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.35,
+            "completeness": 0.3,
+            "format_compliance": 0.2,
+            "safety": 0.15
+          },
+          "deterministic": {
+            "required_sections": [
+              "input",
+              "output"
+            ],
+            "min_words": 60,
+            "max_chars": 5000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "clarity"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "review_code_defects",
+    "name": "Review Code for Potential Defects",
+    "description": "Review a diff or file for likely defects, with severity and rationale.",
+    "department": "Engineering",
+    "target_role": "Developer",
+    "task_type": "analysis",
+    "risk_level": "MEDIUM",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "json",
+    "estimated_manual_minutes": 25,
+    "estimated_assisted_minutes": 8,
+    "input_schema": [
+      {
+        "name": "code",
+        "label": "Diff or file",
+        "type": "code",
+        "required": true
+      },
+      {
+        "name": "context",
+        "label": "What this code is meant to do",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "A first pass before human review",
+        "Checking for common defect classes"
+      ],
+      "when_not_to_use": [
+        "Replacing human code review",
+        "Security sign-off"
+      ],
+      "good_input_example": "A focused diff plus one sentence of intent.",
+      "poor_input_example": "An entire repository dump."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "You review code for likely defects. Report only issues you can point at in the supplied code. Return JSON with keys: summary, findings (array of {title, severity, line_hint, rationale}).",
+        "prompt_template": "Intent: $context\n\nCode:\n$code",
+        "temperature": 0.2,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.3,
+            "completeness": 0.2,
+            "groundedness": 0.25,
+            "format_compliance": 0.15,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_json": true,
+            "required_json_fields": [
+              "summary",
+              "findings"
+            ],
+            "max_chars": 6000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "code"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "meeting_notes_to_action_items",
+    "name": "Meeting Notes to Action Items",
+    "description": "Turn raw meeting notes into a summary, decisions and owned action items.",
+    "department": "Operations",
+    "target_role": "Manager",
+    "task_type": "extraction",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "json",
+    "estimated_manual_minutes": 20,
+    "estimated_assisted_minutes": 5,
+    "input_schema": [
+      {
+        "name": "meeting_notes",
+        "label": "Meeting notes",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Raw notes, bullet points or a transcript."
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Converting messy notes into owned actions",
+        "Circulating a consistent summary after a meeting"
+      ],
+      "when_not_to_use": [
+        "Notes containing performance or disciplinary discussion about a named individual"
+      ],
+      "good_input_example": "Notes that name who said what and any dates mentioned.",
+      "poor_input_example": "Three words of shorthand with no names or dates."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Extract structure from meeting notes. Return JSON only, with keys: summary (string), decisions (array of strings), action_items (array of {task, owner, deadline}). Use null for an owner or deadline the notes do not state. Never invent an owner.",
+        "prompt_template": "Meeting notes:\n$meeting_notes",
+        "temperature": 0.1,
+        "changelog": "Initial version.",
+        "is_active": false,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.25,
+            "completeness": 0.25,
+            "groundedness": 0.25,
+            "format_compliance": 0.15,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_json": true,
+            "required_json_fields": [
+              "summary",
+              "decisions",
+              "action_items"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "meeting_notes"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      },
+      {
+        "version": 2,
+        "system_prompt": "Extract structure from meeting notes.\n\nReturn JSON only, with keys:\n- summary: two sentences maximum\n- decisions: array of decisions actually made, not topics discussed\n- action_items: array of {task, owner, deadline}\n\nRules:\n- Every owner and deadline must appear in the notes. Use null when absent; never infer.\n- A task is an action someone committed to, not an idea that was raised.\n- If the notes contain no decisions, return an empty array rather than padding.",
+        "prompt_template": "Meeting notes:\n$meeting_notes",
+        "temperature": 0.1,
+        "changelog": "Separated decisions from discussion topics, forbade inferred owners, and capped the summary at two sentences after reviewers reported padded output.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.25,
+            "completeness": 0.25,
+            "groundedness": 0.25,
+            "format_compliance": 0.15,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_json": true,
+            "required_json_fields": [
+              "summary",
+              "decisions",
+              "action_items"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "meeting_notes"
+          ],
+          "criteria": [
+            "Owners and deadlines must be traceable to the notes.",
+            "Decisions must be decisions, not topics."
+          ],
+          "output_schema": {
+            "name": "meeting_extraction",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "string"
+                },
+                "decisions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "action_items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "task": {
+                        "type": "string"
+                      },
+                      "owner": {
+                        "type": "string"
+                      },
+                      "deadline": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "task",
+                      "owner",
+                      "deadline"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "summary",
+                "decisions",
+                "action_items"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "summarize_meeting_notes",
+    "name": "Summarize Meeting Notes",
+    "description": "Produce a short, circulation-ready summary of a meeting.",
+    "department": "Operations",
+    "target_role": "Manager",
+    "task_type": "summarisation",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 15,
+    "estimated_assisted_minutes": 4,
+    "input_schema": [
+      {
+        "name": "meeting_notes",
+        "label": "Meeting notes",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Circulating a recap to people who were not present"
+      ],
+      "when_not_to_use": [
+        "Anything that will be treated as a formal minute of record without human editing"
+      ],
+      "good_input_example": "Full notes including attendees.",
+      "poor_input_example": "A calendar invite with no notes."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Summarise the meeting in under 200 words under the headings Summary, Decisions and Next steps. Include only what the notes state.",
+        "prompt_template": "Meeting notes:\n$meeting_notes",
+        "temperature": 0.2,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.25,
+            "completeness": 0.2,
+            "groundedness": 0.3,
+            "format_compliance": 0.15,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "required_sections": [
+              "summary",
+              "decisions",
+              "next steps"
+            ],
+            "max_chars": 2000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "meeting_notes"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "draft_customer_response",
+    "name": "Draft Customer Response",
+    "description": "Draft a reply to a customer that stays inside the stated company policy.",
+    "department": "Customer Support",
+    "target_role": "Support",
+    "task_type": "generation",
+    "risk_level": "MEDIUM",
+    "status": "ACTIVE",
+    "requires_human_review": true,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 12,
+    "estimated_assisted_minutes": 4,
+    "input_schema": [
+      {
+        "name": "customer_message",
+        "label": "Customer message",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "name": "company_policy",
+        "label": "Relevant policy extract",
+        "type": "textarea",
+        "required": true,
+        "help_text": "Paste the policy text. The draft is scored for groundedness against it."
+      },
+      {
+        "name": "tone",
+        "label": "Tone",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Warm",
+          "Neutral",
+          "Formal",
+          "Apologetic"
+        ]
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Drafting a first reply you will edit",
+        "Keeping tone consistent across a team"
+      ],
+      "when_not_to_use": [
+        "Sending the draft without reading it",
+        "Answering a question the supplied policy does not cover",
+        "Pasting the customer's payment details or ID numbers into the input"
+      ],
+      "good_input_example": "The customer message plus the exact policy paragraph that governs the answer.",
+      "poor_input_example": "The customer message alone, leaving the model to guess the policy."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Draft a customer support reply in the requested tone. Be helpful and concise.",
+        "prompt_template": "Customer message:\n$customer_message\n\nCompany policy:\n$company_policy\n\nTone: $tone",
+        "temperature": 0.4,
+        "changelog": "Initial version.",
+        "is_active": false,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.25,
+            "completeness": 0.2,
+            "groundedness": 0.35,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "max_chars": 2500,
+            "min_words": 40,
+            "prohibited_terms": [
+              "as an ai",
+              "i cannot help"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness",
+            "clarity"
+          ],
+          "grounding_fields": [
+            "company_policy"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      },
+      {
+        "version": 2,
+        "system_prompt": "You draft customer support replies that a human agent will review before sending.\n\nRules:\n- Every commitment you make (refunds, timelines, entitlements) must be stated in the supplied policy. If the policy does not cover the question, say what you can confirm and offer to escalate.\n- Acknowledge the problem before asking for anything.\n- Never blame the customer.\n- Ask for at most three pieces of troubleshooting information.\n- Match the requested tone. Close with a named sign-off placeholder.",
+        "prompt_template": "Customer message:\n$customer_message\n\nCompany policy:\n$company_policy\n\nTone: $tone",
+        "temperature": 0.3,
+        "changelog": "Bound every commitment to the supplied policy, required acknowledgement before questions, and capped troubleshooting requests at three after agents reported customers being asked for too much at once.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.2,
+            "completeness": 0.2,
+            "groundedness": 0.4,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "max_chars": 2500,
+            "min_words": 40,
+            "prohibited_terms": [
+              "as an ai",
+              "i cannot help",
+              "unfortunately you"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness",
+            "clarity"
+          ],
+          "grounding_fields": [
+            "company_policy"
+          ],
+          "criteria": [
+            "Any entitlement, refund or timeline must be supported by the policy text.",
+            "The reply must acknowledge the issue before requesting information.",
+            "The reply must not attribute fault to the customer."
+          ]
+        },
+        "model": "gpt-4.1"
+      }
+    ]
+  },
+  {
+    "slug": "categorize_support_ticket",
+    "name": "Categorize Support Ticket",
+    "description": "Classify an inbound ticket by category, urgency and required team.",
+    "department": "Customer Support",
+    "target_role": "Support",
+    "task_type": "classification",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "json",
+    "estimated_manual_minutes": 5,
+    "estimated_assisted_minutes": 1,
+    "input_schema": [
+      {
+        "name": "ticket",
+        "label": "Ticket text",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Triaging a queue",
+        "Routing consistently across shifts"
+      ],
+      "when_not_to_use": [
+        "Auto-closing tickets without a human seeing them"
+      ],
+      "good_input_example": "The full ticket body.",
+      "poor_input_example": "A subject line only."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Classify the ticket. Return JSON with keys: category (one of billing, access, bug, how_to, other), urgency (low, medium, high), team, rationale. Base the classification only on the ticket text.",
+        "prompt_template": "Ticket:\n$ticket",
+        "temperature": 0.0,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.3,
+            "completeness": 0.15,
+            "groundedness": 0.3,
+            "format_compliance": 0.15,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_json": true,
+            "required_json_fields": [
+              "category",
+              "urgency",
+              "team",
+              "rationale"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "ticket"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "improve_job_description",
+    "name": "Job Description Improver",
+    "description": "Rewrite a job description for clarity and flag exclusionary wording.",
+    "department": "Human Resources",
+    "target_role": "HR",
+    "task_type": "generation",
+    "risk_level": "MEDIUM",
+    "status": "ACTIVE",
+    "requires_human_review": true,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 30,
+    "estimated_assisted_minutes": 8,
+    "input_schema": [
+      {
+        "name": "current_description",
+        "label": "Current description",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "name": "role_level",
+        "label": "Role level",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Junior",
+          "Mid",
+          "Senior",
+          "Lead",
+          "Manager"
+        ]
+      },
+      {
+        "name": "required_skills",
+        "label": "Required skills",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Tightening a description before posting",
+        "Catching wording that narrows the applicant pool without cause"
+      ],
+      "when_not_to_use": [
+        "Screening, scoring or ranking applicants",
+        "Any decision about an individual candidate"
+      ],
+      "good_input_example": "The current posting plus the skills that are genuinely required rather than nice to have.",
+      "poor_input_example": "A job title alone."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "You improve job descriptions.\n\nRules:\n- Keep every genuine requirement; do not invent new ones.\n- Replace age, gender, nationality and culture-coded wording ('young', 'rockstar', 'native speaker', 'culture fit') with the concrete capability actually needed.\n- Separate required from preferred.\n- End with a section titled 'Notes on inclusive language' listing each change you made and why.\n\nYou are drafting copy for a human recruiter to review. You do not evaluate candidates.",
+        "prompt_template": "Role level: $role_level\nRequired skills: $required_skills\n\nCurrent description:\n$current_description",
+        "temperature": 0.3,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.25,
+            "completeness": 0.25,
+            "groundedness": 0.2,
+            "format_compliance": 0.2,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "required_sections": [
+              "responsibilities",
+              "requirements",
+              "notes on inclusive language"
+            ],
+            "prohibited_terms": [
+              "rockstar",
+              "ninja",
+              "young and energetic",
+              "culture fit",
+              "native speaker"
+            ],
+            "max_chars": 5000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness",
+            "clarity"
+          ],
+          "grounding_fields": [
+            "current_description",
+            "required_skills"
+          ],
+          "criteria": [
+            "Requirements must trace to the supplied description or skills list."
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "summarize_interview_notes",
+    "name": "Summarize Interview Notes",
+    "description": "Summarise interview notes against the scorecard criteria, without a hiring recommendation.",
+    "department": "Human Resources",
+    "target_role": "HR",
+    "task_type": "summarisation",
+    "risk_level": "HIGH",
+    "status": "ACTIVE",
+    "requires_human_review": true,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 20,
+    "estimated_assisted_minutes": 6,
+    "input_schema": [
+      {
+        "name": "interview_notes",
+        "label": "Interview notes",
+        "type": "textarea",
+        "required": true,
+        "help_text": "Do not paste candidate contact details, ID numbers or protected characteristics."
+      },
+      {
+        "name": "scorecard",
+        "label": "Scorecard criteria",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Turning rough notes into a structured record against agreed criteria"
+      ],
+      "when_not_to_use": [
+        "Producing a hire/no-hire recommendation",
+        "Comparing candidates against each other",
+        "Including personal data beyond what the scorecard requires"
+      ],
+      "good_input_example": "Notes keyed to the scorecard dimensions, with the candidate referred to as 'the candidate'.",
+      "poor_input_example": "Notes containing the candidate's email address, phone number and date of birth."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Summarise interview notes against the supplied scorecard.\n\nRules:\n- Organise the summary by scorecard criterion.\n- Quote or paraphrase only evidence present in the notes.\n- Where the notes provide no evidence for a criterion, write 'No evidence recorded'.\n- Do not give a hiring recommendation, a score, or a comparison to any other candidate. A human makes that decision.",
+        "prompt_template": "Scorecard criteria:\n$scorecard\n\nInterview notes:\n$interview_notes",
+        "temperature": 0.2,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.2,
+            "completeness": 0.2,
+            "groundedness": 0.4,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "prohibited_terms": [
+              "recommend hiring",
+              "do not hire",
+              "strong hire",
+              "better than the other"
+            ],
+            "max_chars": 4000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "interview_notes",
+            "scorecard"
+          ],
+          "criteria": [
+            "The summary must not contain a hiring recommendation."
+          ]
+        },
+        "model": "gpt-4.1"
+      }
+    ]
+  },
+  {
+    "slug": "generate_campaign_variants",
+    "name": "Generate Campaign Variants",
+    "description": "Produce on-brief copy variants for a campaign, with the angle behind each.",
+    "department": "Marketing",
+    "target_role": "Marketing",
+    "task_type": "generation",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "json",
+    "estimated_manual_minutes": 25,
+    "estimated_assisted_minutes": 6,
+    "input_schema": [
+      {
+        "name": "product",
+        "label": "Product or offer",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "name": "audience",
+        "label": "Audience",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "channel",
+        "label": "Channel",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Email subject line",
+          "Landing page headline",
+          "Paid social",
+          "In-product banner"
+        ]
+      },
+      {
+        "name": "variant_count",
+        "label": "Number of variants",
+        "type": "select",
+        "required": true,
+        "options": [
+          "3",
+          "5"
+        ]
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Generating starting points for a test",
+        "Breaking out of one phrasing rut"
+      ],
+      "when_not_to_use": [
+        "Publishing copy that makes a claim nobody has verified"
+      ],
+      "good_input_example": "A concrete offer, a named audience and the channel.",
+      "poor_input_example": "'Write me marketing copy.'"
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Generate campaign copy variants. Return JSON with keys: variants (array of {copy, angle}), notes. Each variant must use a different angle. Make no factual claim that the brief does not support.",
+        "prompt_template": "Product: $product\nAudience: $audience\nChannel: $channel\nVariants requested: $variant_count",
+        "temperature": 0.7,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.35,
+            "completeness": 0.2,
+            "groundedness": 0.2,
+            "format_compliance": 0.15,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_json": true,
+            "required_json_fields": [
+              "variants",
+              "notes"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness",
+            "clarity"
+          ],
+          "grounding_fields": [
+            "product"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "analyze_customer_feedback",
+    "name": "Analyze Customer Feedback",
+    "description": "Cluster free-text customer feedback into themes with representative quotes.",
+    "department": "Marketing",
+    "target_role": "Marketing",
+    "task_type": "analysis",
+    "risk_level": "LOW",
+    "status": "ACTIVE",
+    "requires_human_review": false,
+    "allowed_data_classification": "INTERNAL",
+    "expected_output_format": "json",
+    "estimated_manual_minutes": 40,
+    "estimated_assisted_minutes": 10,
+    "input_schema": [
+      {
+        "name": "feedback",
+        "label": "Feedback (one item per line)",
+        "type": "textarea",
+        "required": true,
+        "help_text": "Remove customer names and email addresses before pasting."
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Finding themes across a survey export"
+      ],
+      "when_not_to_use": [
+        "Reporting a theme count as a statistically valid measurement"
+      ],
+      "good_input_example": "Anonymised verbatims, one per line.",
+      "poor_input_example": "A spreadsheet export including customer email addresses."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Cluster the feedback into themes. Return JSON with keys: themes (array of {theme, count, representative_quote, sentiment}), summary. Every quote must appear verbatim in the input. Do not invent themes that only one item supports unless you label the count as 1.",
+        "prompt_template": "Feedback:\n$feedback",
+        "temperature": 0.2,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.25,
+            "completeness": 0.2,
+            "groundedness": 0.35,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "expect_json": true,
+            "required_json_fields": [
+              "themes",
+              "summary"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "feedback"
+          ],
+          "criteria": [
+            "Representative quotes must appear verbatim in the supplied feedback."
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  },
+  {
+    "slug": "explain_variance_report",
+    "name": "Analyze Financial Variance",
+    "description": "Explain budget-versus-actual variance using only the supplied figures.",
+    "department": "Finance",
+    "target_role": "Finance",
+    "task_type": "analysis",
+    "risk_level": "HIGH",
+    "status": "ACTIVE",
+    "requires_human_review": true,
+    "allowed_data_classification": "CONFIDENTIAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 45,
+    "estimated_assisted_minutes": 12,
+    "input_schema": [
+      {
+        "name": "variance_report",
+        "label": "Variance report",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Budget: $500,000\nActual: $570,000\nMarketing spend increased by $45,000.\nInfrastructure increased by $25,000.",
+        "help_text": "Paste the figures. The explanation is scored for groundedness against them."
+      },
+      {
+        "name": "period",
+        "label": "Period",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Drafting the narrative around figures you have already validated"
+      ],
+      "when_not_to_use": [
+        "Producing figures the report does not contain",
+        "Anything filed externally without a qualified human review",
+        "Forecasting from a single period"
+      ],
+      "good_input_example": "Budget, actual and the line-item movements, with the period named.",
+      "poor_input_example": "'Explain why we overspent' with no figures attached."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Explain the variance between budget and actual for the stated period. Use only the figures supplied. Cover: summary, drivers, and recommendations.",
+        "prompt_template": "Period: $period\n\nVariance report:\n$variance_report",
+        "temperature": 0.3,
+        "changelog": "Initial version.",
+        "is_active": false,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.2,
+            "completeness": 0.2,
+            "groundedness": 0.4,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "required_sections": [
+              "summary",
+              "drivers",
+              "recommendations"
+            ],
+            "max_chars": 4000
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "variance_report"
+          ]
+        },
+        "model": "gpt-4.1-mini"
+      },
+      {
+        "version": 2,
+        "system_prompt": "You explain budget-versus-actual variance for a finance team. A qualified human reviews everything you produce.\n\nRules:\n- Every number you state must appear in, or be arithmetic on, the supplied report. Show the arithmetic when you derive a figure.\n- Do not attribute a cause the report does not state. Where the cause is unknown, say 'driver not stated in the report' and propose what to check.\n- Do not forecast.\n- Use exactly these headings: Summary, Drivers, Recommendations.\n- End with the line: 'Figures above are taken from the supplied variance report only.'",
+        "prompt_template": "Period: $period\n\nVariance report:\n$variance_report",
+        "temperature": 0.2,
+        "changelog": "Required arithmetic to be shown, forbade unstated causes and forecasting, and fixed the heading set. Added after groundedness scores showed the v1 prompt inventing plausible-sounding drivers.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.15,
+            "completeness": 0.2,
+            "groundedness": 0.45,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "required_sections": [
+              "summary",
+              "drivers",
+              "recommendations"
+            ],
+            "max_chars": 4000,
+            "prohibited_terms": [
+              "we forecast",
+              "next quarter will",
+              "guaranteed"
+            ]
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "variance_report"
+          ],
+          "criteria": [
+            "Every figure must appear in the report or be derivable from it.",
+            "Causes not stated in the report must be labelled as not stated."
+          ]
+        },
+        "model": "gpt-4.1"
+      }
+    ]
+  },
+  {
+    "slug": "summarize_financial_narrative",
+    "name": "Summarize Financial Narrative",
+    "description": "Condense a long financial commentary into a board-ready summary.",
+    "department": "Finance",
+    "target_role": "Finance",
+    "task_type": "summarisation",
+    "risk_level": "HIGH",
+    "status": "ACTIVE",
+    "requires_human_review": true,
+    "allowed_data_classification": "CONFIDENTIAL",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 35,
+    "estimated_assisted_minutes": 10,
+    "input_schema": [
+      {
+        "name": "narrative",
+        "label": "Financial narrative",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [
+        "Shortening commentary you have already validated"
+      ],
+      "when_not_to_use": [
+        "Anything published externally without qualified review"
+      ],
+      "good_input_example": "The full narrative text.",
+      "poor_input_example": "A partial extract missing the figures it refers to."
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "Summarise the financial narrative in under 250 words. Every figure must appear in the source. Do not add interpretation the source does not make.",
+        "prompt_template": "Narrative:\n$narrative",
+        "temperature": 0.2,
+        "changelog": "Initial version.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "relevance": 0.2,
+            "completeness": 0.2,
+            "groundedness": 0.4,
+            "format_compliance": 0.1,
+            "safety": 0.1
+          },
+          "deterministic": {
+            "max_chars": 2000,
+            "min_words": 60
+          },
+          "judge_dimensions": [
+            "relevance",
+            "completeness",
+            "groundedness"
+          ],
+          "grounding_fields": [
+            "narrative"
+          ]
+        },
+        "model": "gpt-4.1"
+      }
+    ]
+  },
+  {
+    "slug": "auto_reject_applicant",
+    "name": "Automatically Reject Applicant",
+    "description": "Registered as a prohibited use case. Retained in the catalogue so the boundary is visible and auditable, not so it can be run.",
+    "department": "Human Resources",
+    "target_role": "HR",
+    "task_type": "decision",
+    "risk_level": "PROHIBITED",
+    "status": "DRAFT",
+    "requires_human_review": true,
+    "allowed_data_classification": "PUBLIC",
+    "expected_output_format": "text",
+    "estimated_manual_minutes": 0,
+    "estimated_assisted_minutes": 0,
+    "input_schema": [
+      {
+        "name": "application",
+        "label": "Application",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "guidance": {
+      "when_to_use": [],
+      "when_not_to_use": [
+        "Any automated adverse decision about a person's employment",
+        "Ranking or scoring candidates",
+        "Filtering applications without a human decision-maker"
+      ],
+      "good_input_example": "",
+      "poor_input_example": ""
+    },
+    "versions": [
+      {
+        "version": 1,
+        "system_prompt": "This workflow is blocked by governance policy and never reaches a provider.",
+        "prompt_template": "$application",
+        "temperature": 0.0,
+        "changelog": "Registered as a prohibited use case.",
+        "is_active": true,
+        "evaluation_rubric": {
+          "weights": {
+            "safety": 1.0
+          }
+        },
+        "model": "gpt-4.1-mini"
+      }
+    ]
+  }
+]
