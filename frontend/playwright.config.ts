@@ -11,6 +11,9 @@ const BACKEND_URL = `http://127.0.0.1:${BACKEND_PORT}`;
  */
 export default defineConfig({
   testDir: "./tests",
+  // The screenshot spec writes files into docs/, so it is opt-in rather than
+  // part of the normal suite:  CAPTURE_SCREENSHOTS=1 npx playwright test screenshots
+  testIgnore: process.env.CAPTURE_SCREENSHOTS ? [] : ["**/screenshots.spec.ts"],
   fullyParallel: false,
   workers: 1,
   timeout: 45_000,

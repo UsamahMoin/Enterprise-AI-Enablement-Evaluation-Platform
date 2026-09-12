@@ -114,3 +114,19 @@ test("governance page lists policies and an audit trail without raw values", asy
   // The audit trail stores categories, never the detected value.
   await expect(page.getByText("123-45-6789")).toHaveCount(0);
 });
+
+test("governance page explains provider capabilities and their limits", async ({ page }) => {
+  await signIn(page, "admin@demo.com");
+  await page.goto("/governance");
+
+  await expect(page.getByText("Model providers")).toBeVisible();
+
+  // Each provider's governance-relevant capabilities are stated, including the
+  // one that costs something: a self-hosted provider cannot moderate.
+  const localRow = page.getByRole("row").filter({ hasText: "local" }).first();
+  await expect(localRow).toContainText("RESTRICTED");
+  await expect(localRow).toContainText("None");
+
+  await expect(page.getByText(/routing a workflow to a self-hosted model/i)).toBeVisible();
+  await expect(page.getByText(/never as passed/i)).toBeVisible();
+});

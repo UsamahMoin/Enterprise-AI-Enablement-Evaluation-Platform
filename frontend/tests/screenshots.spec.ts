@@ -1,7 +1,7 @@
 /**
  * Regenerates the screenshots used in the README.
  *
- *   npx playwright test screenshots --update-snapshots
+ *   CAPTURE_SCREENSHOTS=1 npx playwright test screenshots
  *
  * Kept as a test rather than a manual step so the images in the README cannot
  * quietly drift away from what the app actually renders.
@@ -23,10 +23,14 @@ async function signIn(page: Page, email: string) {
 test("capture README screenshots", async ({ page }) => {
   await signIn(page, "employee@demo.com");
   await expect(page.getByText("Recommended workflows")).toBeVisible();
+  await expect(page.getByText("Enablement progress")).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/dashboard.png`, fullPage: true });
 
   await page.goto("/workflows");
   await expect(page.getByRole("heading", { name: "Workflow library" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Generate Unit Tests" })).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/workflow-library.png` });
 
   await page.goto("/workflows/generate_unit_tests");
@@ -53,22 +57,37 @@ test("capture README screenshots", async ({ page }) => {
 
   await page.goto("/analytics");
   await expect(page.getByText("Effective adoption")).toBeVisible();
+  await expect(page.getByText("Department adoption")).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/adoption-analytics.png`, fullPage: true });
 
   await page.getByRole("button", { name: "Quality" }).click();
   await expect(page.getByText("Quality by workflow")).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/quality-dashboard.png`, fullPage: true });
 
   await page.getByRole("button", { name: "Prompt versions" }).click();
   await expect(page.getByText("Prompt version comparison")).toBeVisible();
-  await page.waitForTimeout(1200);
+  await expect(page.getByText("What changed between versions")).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/prompt-versions.png`, fullPage: true });
 
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Enterprise AI overview" })).toBeVisible();
+  await expect(page.getByText("Most used workflows")).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/admin-overview.png`, fullPage: true });
 
   await page.goto("/governance");
+  // Wait for every async panel, not just the static copy, or the capture
+  // lands on a page full of "Loading...".
   await expect(page.getByText("Pre-execution pipeline")).toBeVisible();
+  await expect(page.getByText("Model providers")).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "local" }).first()).toContainText(
+    "RESTRICTED",
+  );
+  await expect(page.getByText("Sensitive data detection", { exact: true })).toBeVisible();
+  await expect(page.getByText("Detection categories and counts only.")).toBeVisible();
+  await expect(page.getByText("Loading...")).toHaveCount(0);
   await page.screenshot({ path: `${DIR}/governance.png`, fullPage: true });
 });
