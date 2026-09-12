@@ -51,13 +51,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Outside production any localhost port is accepted, because the frontend is
+# routinely started on whatever port happens to be free. In production only the
+# explicitly configured origins are allowed.
+cors_kwargs: dict = {
+    "allow_origins": settings.cors_origins,
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+if settings.app_env != "production":
+    cors_kwargs["allow_origin_regex"] = r"http://(localhost|127\.0\.0\.1):\d+"
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 app.include_router(auth.router)
 app.include_router(workflows.router)
