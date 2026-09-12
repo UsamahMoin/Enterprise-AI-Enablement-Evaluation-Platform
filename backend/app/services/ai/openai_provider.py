@@ -9,6 +9,7 @@ import time
 from openai import AsyncOpenAI
 
 from app.core.config import settings
+from app.core.enums import DataClassification
 from app.services.ai.base import (
     AIProvider,
     GenerationRequest,
@@ -19,6 +20,16 @@ from app.services.ai.base import (
 
 class OpenAIProvider(AIProvider):
     name = "openai"
+
+    supports_moderation = True
+    # A hosted provider is an egress of data. RESTRICTED categories are not
+    # sent off-site regardless of what an individual workflow permits.
+    max_data_classification = DataClassification.CONFIDENTIAL
+    keeps_data_in_house = False
+    description = (
+        "OpenAI Responses API with the Moderations endpoint. Strong structured "
+        "output; input leaves the network."
+    )
 
     def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         key = api_key or settings.openai_api_key
@@ -76,5 +87,8 @@ class OpenAIProvider(AIProvider):
             if value
         ]
         return ModerationResult(
-            flagged=bool(item.flagged), categories=flagged_categories, provider=self.name
+            flagged=bool(item.flagged),
+            categories=flagged_categories,
+            provider=self.name,
+            available=True,
         )

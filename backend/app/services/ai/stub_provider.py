@@ -14,6 +14,7 @@ import json
 import random
 import time
 
+from app.core.enums import DataClassification
 from app.services.ai.base import (
     AIProvider,
     GenerationRequest,
@@ -35,6 +36,16 @@ def _approx_tokens(text: str) -> int:
 
 class StubProvider(AIProvider):
     name = "stub"
+
+    # The keyword screen below is not real moderation, but it is deterministic
+    # and it does run, so the pipeline exercises the same code path.
+    supports_moderation = True
+    max_data_classification = DataClassification.RESTRICTED
+    keeps_data_in_house = True
+    description = (
+        "Offline fixtures derived from the input. Not a model: it ignores the "
+        "system prompt, so it cannot be used to compare prompt versions."
+    )
 
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
         started = time.perf_counter()
@@ -58,7 +69,9 @@ class StubProvider(AIProvider):
     async def moderate(self, text: str) -> ModerationResult:
         lowered = text.lower()
         hits = [term for term in _MODERATION_TERMS if term in lowered]
-        return ModerationResult(flagged=bool(hits), categories=hits, provider=self.name)
+        return ModerationResult(
+            flagged=bool(hits), categories=hits, provider=self.name, available=True
+        )
 
     # -- synthesis -------------------------------------------------------
     def _synth_json(self, request: GenerationRequest, rng: random.Random) -> dict:
