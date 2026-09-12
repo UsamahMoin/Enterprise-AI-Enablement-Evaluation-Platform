@@ -20,7 +20,9 @@ class User(UUIDPrimaryKey, TimestampMixin, Base):
     # Functional role used to recommend workflows (e.g. "Developer", "HR").
     job_role: Mapped[str] = mapped_column(String(60), nullable=False, default="Employee")
     # Authorisation role inside the platform.
-    system_role: Mapped[str] = mapped_column(String(20), nullable=False, default=SystemRole.EMPLOYEE)
+    system_role: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=SystemRole.EMPLOYEE
+    )
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     department: Mapped[Department | None] = relationship(back_populates="users")

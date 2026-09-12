@@ -29,7 +29,9 @@ def render_prompt(template: str, inputs: dict) -> str:
     `string.Template` is used rather than str.format so that braces in user
     content (JSON, code) cannot break rendering or inject placeholders.
     """
-    safe_inputs = {key: ("" if value is None else str(value)) for key, value in (inputs or {}).items()}
+    safe_inputs = {
+        key: ("" if value is None else str(value)) for key, value in (inputs or {}).items()
+    }
     return Template(template).safe_substitute(safe_inputs)
 
 

@@ -117,7 +117,9 @@ def check_python_syntax(output: str) -> CheckResult:
     try:
         ast.parse(code)
     except SyntaxError as exc:
-        return CheckResult("code_syntax", False, 0.0, f"Syntax error: {exc.msg} (line {exc.lineno}).")
+        return CheckResult(
+            "code_syntax", False, 0.0, f"Syntax error: {exc.msg} (line {exc.lineno})."
+        )
     return CheckResult("code_syntax", True, 100.0, "Code parses as valid Python.")
 
 

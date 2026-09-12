@@ -120,7 +120,7 @@ async def judge_output(
     result: dict = {"model": judge_model, "reasoning": str(parsed.get("reasoning", ""))[:2000]}
     for dimension in scored_dimensions:
         value = parsed.get(dimension)
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             result[dimension] = max(0.0, min(100.0, float(value)))
         else:
             result[dimension] = None

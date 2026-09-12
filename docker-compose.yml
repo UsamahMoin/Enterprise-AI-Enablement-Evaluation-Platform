@@ -17,7 +17,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eail}:${POSTGRES_PASSWORD:-eail_dev_password}@db:5432/${POSTGRES_DB:-eail}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}

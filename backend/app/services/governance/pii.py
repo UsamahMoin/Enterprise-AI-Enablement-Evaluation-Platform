@@ -70,18 +70,22 @@ DETECTORS: list[Detector] = [
         DataClassification.RESTRICTED,
         "HIGH",
     ),
+    # Contact details are permitted on INTERNAL workflows and warned about
+    # rather than blocked: blocking every email address would stop ordinary
+    # work (a code comment, a support thread) and train people to route around
+    # the platform. They are still blocked on PUBLIC-classified workflows.
     Detector(
         "EMAIL",
         "Email address",
         re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.]{2,}\b"),
-        DataClassification.CONFIDENTIAL,
+        DataClassification.INTERNAL,
         "MEDIUM",
     ),
     Detector(
         "PHONE",
         "Phone number",
         re.compile(r"(?<!\d)(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?!\d)"),
-        DataClassification.CONFIDENTIAL,
+        DataClassification.INTERNAL,
         "MEDIUM",
     ),
 ]
@@ -113,7 +117,8 @@ def scan_text(text: str, field: str = "") -> list[Detection]:
             matches = [
                 match
                 for match in matches
-                if _luhn_valid(re.sub(r"\D", "", match)) and 13 <= len(re.sub(r"\D", "", match)) <= 19
+                if _luhn_valid(re.sub(r"\D", "", match))
+                and 13 <= len(re.sub(r"\D", "", match)) <= 19
             ]
         if matches:
             findings.append(
