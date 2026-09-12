@@ -27,9 +27,11 @@ class EvaluationOut(BaseModel):
     format_compliance: float | None = None
     clarity: float | None = None
     safety_passed: bool = True
+    safety_checked: bool = True
     overall_score: float = 0.0
     deterministic_checks: list[DeterministicCheckOut] = Field(default_factory=list)
     evaluation_model: str = ""
+    evaluation_provider: str = ""
     evaluation_reasoning: str = ""
     rubric_used: dict = Field(default_factory=dict)
 
@@ -71,6 +73,10 @@ class GovernanceOut(BaseModel):
     detections: list[GovernanceDetection] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     requires_human_review: bool = False
+    provider: str = ""
+    effective_classification: str = ""
+    moderation_checked: bool = True
+    moderation_provider: str = ""
 
 
 class ExecutionOut(BaseModel):

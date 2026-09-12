@@ -4,6 +4,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin, require_manager
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.governance import GovernancePolicy, PolicyViolation
 from app.models.user import User
@@ -46,6 +47,28 @@ class ViolationOut(BaseModel):
     created_at: str
 
 
+class ProviderOut(BaseModel):
+    name: str
+    configured: bool = True
+    supports_moderation: bool = False
+    max_data_classification: str = ""
+    keeps_data_in_house: bool = False
+    description: str = ""
+    error: str = ""
+    is_default: bool = False
+    is_judge: bool = False
+    reachable: bool | None = None
+    models: list[str] = []
+
+
+class ProviderSettingsOut(BaseModel):
+    generation_provider: str
+    evaluation_provider: str
+    moderation_provider: str
+    moderation_fail_closed: bool
+    providers: list[ProviderOut]
+
+
 class AdminOverview(BaseModel):
     adoption: AdoptionSummary
     quality: QualitySummary
@@ -78,6 +101,47 @@ async def overview(
         top_workflows=top,
         needs_attention=attention,
         blocked_requests=int(blocked),
+    )
+
+
+@router.get("/providers", response_model=ProviderSettingsOut)
+async def list_providers(viewer: User = Depends(require_manager)) -> ProviderSettingsOut:
+    """Provider capabilities, so governance decisions are explainable.
+
+    Providers are not interchangeable in the ways governance cares about: one
+    keeps data in-house but cannot moderate, another moderates well but is an
+    egress of data. This is the screen that says which is which.
+    """
+    from app.services.ai import available_providers
+    from app.services.ai.local_provider import LocalProvider
+
+    rows: list[ProviderOut] = []
+    for summary in available_providers():
+        row = ProviderOut(
+            name=summary["name"],
+            configured="error" not in summary,
+            supports_moderation=summary.get("supports_moderation", False),
+            max_data_classification=summary.get("max_data_classification", ""),
+            keeps_data_in_house=summary.get("keeps_data_in_house", False),
+            description=summary.get("description", ""),
+            error=summary.get("error", ""),
+            is_default=summary["name"] == settings.ai_provider,
+            is_judge=summary["name"] == settings.judge_provider,
+        )
+        if row.name == "local" and row.configured:
+            health = await LocalProvider().health()
+            row.reachable = health["reachable"]
+            row.models = health.get("models", [])
+            if not health["reachable"]:
+                row.error = health.get("error", "")
+        rows.append(row)
+
+    return ProviderSettingsOut(
+        generation_provider=settings.ai_provider,
+        evaluation_provider=settings.judge_provider,
+        moderation_provider=settings.moderation_provider or "(generation provider)",
+        moderation_fail_closed=settings.moderation_fail_closed,
+        providers=rows,
     )
 
 

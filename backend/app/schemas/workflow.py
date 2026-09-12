@@ -28,6 +28,7 @@ class WorkflowVersionOut(BaseModel):
     system_prompt: str
     prompt_template: str
     model: str
+    provider: str | None = None
     temperature: float
     evaluation_rubric: dict
     changelog: str
@@ -41,6 +42,9 @@ class WorkflowVersionCreate(BaseModel):
     system_prompt: str
     prompt_template: str
     model: str | None = None
+    # Pin this version to a provider ("local", "openai", "stub"). None uses the
+    # deployment default.
+    provider: str | None = None
     temperature: float = 0.2
     evaluation_rubric: dict | None = None
     changelog: str = ""

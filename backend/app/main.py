@@ -79,5 +79,6 @@ async def health() -> dict:
         "status": "ok",
         "environment": settings.app_env,
         "ai_provider": settings.ai_provider,
+        "evaluation_provider": settings.judge_provider,
         "provider_configured": settings.provider_configured,
     }

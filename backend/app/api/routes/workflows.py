@@ -181,6 +181,8 @@ async def create_version(
         system_prompt=payload.system_prompt,
         prompt_template=payload.prompt_template,
         model=payload.model or (previous.model if previous else "gpt-4.1-mini"),
+        provider=payload.provider if payload.provider is not None
+        else (previous.provider if previous else None),
         temperature=payload.temperature,
         evaluation_rubric=payload.evaluation_rubric
         or (previous.evaluation_rubric if previous else {"weights": DEFAULT_WEIGHTS}),
