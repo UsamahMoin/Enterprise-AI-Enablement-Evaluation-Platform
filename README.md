@@ -109,18 +109,26 @@ Migrations run and the demo dataset seeds automatically on first start.
 | `manager@demo.com` | Manager | Their department's aggregates |
 | `admin@demo.com` | Admin | The whole organisation |
 
-### No API key required
+### Three ways to run inference
 
-The default `AI_PROVIDER=stub` returns deterministic fixtures, so the entire
-platform runs with no key and no spend. For real generation:
-
-```bash
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-```
+| `AI_PROVIDER` | What it is | Needs |
+|---|---|---|
+| `stub` *(default)* | Deterministic offline fixtures | nothing |
+| `openai` | Hosted frontier models, Responses API | `OPENAI_API_KEY` |
+| `local` | Self-hosted model over an OpenAI-compatible API | Ollama / LM Studio / llama.cpp |
 
 The stub ignores the system prompt, so it cannot be used to compare prompt
 versions — the benchmark runner says so explicitly when it is active.
+
+```bash
+# Self-hosted, e.g. Ollama
+AI_PROVIDER=local
+LOCAL_AI_BASE_URL=http://localhost:11434/v1
+LOCAL_AI_MODEL=qwen3:8b
+```
+
+Generation and evaluation are routed **separately**, which is the interesting
+part — see [Where the local provider earns its place](#where-the-local-provider-earns-its-place).
 
 ### Running without Docker
 
@@ -175,6 +183,66 @@ and the audit record keeps the category and count, never the value.
 ### Admin overview
 
 ![Admin overview](docs/screenshots/admin-overview.png)
+
+## Where the local provider earns its place
+
+Not because self-hosted models are better — on the structured-JSON output the
+judge depends on, they are measurably worse. It earns its place for three
+reasons that are specific to an enterprise platform.
+
+**1. It is the structural answer to the problem this platform is about.**
+Sensitive-data detection reduces accidental exposure; self-hosting removes the
+egress entirely. So the data-classification ceiling is a property of the
+*provider*, not just the workflow:
+
+| Provider | Data stays in-house | Max classification | Moderation |
+|---|---|---|---|
+| `openai` | No — egress | CONFIDENTIAL | Available |
+| `local` | Yes | RESTRICTED | **None** |
+
+The limit applied to a request is the **stricter** of what the workflow is
+approved for and what its provider may receive. Routing a workflow to a
+self-hosted model is what raises its ceiling — not editing the workflow:
+
+```
+Workflow approved for RESTRICTED + hosted provider  → blocked at CONFIDENTIAL
+Workflow approved for RESTRICTED + local provider   → permitted
+Workflow approved for INTERNAL   + local provider   → still blocked at INTERNAL
+```
+
+Pin a version to a provider with `provider` on `POST /workflows/{id}/versions`.
+
+![Governance and provider capabilities](docs/screenshots/governance.png)
+
+**2. It lets the judge be independent of the generator.** `EVALUATION_PROVIDER`
+is configured separately from `AI_PROVIDER`. A model grading its own output
+shows self-preference bias; an independent judge is a cheap mitigation. It also
+means sensitive output can be evaluated locally while generation stays hosted,
+or the reverse.
+
+**3. It proves the provider abstraction is real.** `LocalProvider` is not
+`OpenAIProvider` with a different URL: it speaks Chat Completions rather than
+the Responses API, requests `json_object` rather than strict `json_schema`
+because small models comply with the looser form far more reliably, and has no
+moderation endpoint at all.
+
+### The honest cost: moderation
+
+Self-hosted runtimes cannot moderate. The platform refuses to paper over this:
+
+- `ModerationResult.available` distinguishes **"not checked"** from **"checked
+  and clean"**. A provider without an endpoint cannot look like one that passed.
+- The safety dimension is **dropped and the weights renormalised** when the
+  check did not run. Awarding full marks for a check that never happened would
+  inflate the score of exactly the configuration deserving most scrutiny.
+- `MODERATION_PROVIDER` delegates the check to a provider that can do it.
+- `MODERATION_FAIL_CLOSED=true` rejects input nobody could check — off by
+  default so the offline demo runs, and documented as what a regulated
+  deployment turns on.
+
+Token cost for self-hosted runs is recorded as `$0`, because no cost is a
+function of token count there. That is not the same as free: hardware, power and
+operator time are real and are not modelled.
 
 ## The evaluation framework
 
@@ -271,8 +339,8 @@ More: [`docs/adoption-framework.md`](docs/adoption-framework.md).
 | Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS |
 | Backend | Python 3.12, FastAPI, Pydantic v2 |
 | Database | PostgreSQL, SQLAlchemy 2 (async), Alembic |
-| AI | OpenAI Responses + Moderations, behind a provider interface |
-| Testing | pytest (67 tests), Playwright (8 end-to-end) |
+| AI | OpenAI Responses + Moderations, or any OpenAI-compatible self-hosted server, behind one provider interface |
+| Testing | pytest (87 tests), Playwright (8 end-to-end) |
 | Infrastructure | Docker, Docker Compose |
 | CI | GitHub Actions |
 
@@ -302,7 +370,7 @@ POST   /executions/{id}/feedback                 GET  /training/modules
 ## Testing
 
 ```bash
-cd backend  && pytest -q          # 67 tests, SQLite + stub provider, no services
+cd backend  && pytest -q          # 87 tests, SQLite + stub provider, no services
 cd frontend && npx playwright test # 8 end-to-end, starts both servers itself
 ```
 
@@ -316,7 +384,9 @@ every pull request.
 data analysis; typed models generate the API contract for free.
 
 **A provider interface, not scattered SDK calls.** No route, repository or
-evaluator imports a vendor SDK. Adding Claude is a subclass and a factory entry.
+evaluator imports a vendor SDK, and governance reads declared provider
+*capabilities* rather than vendor names. Adding Claude is a subclass and a
+factory entry.
 
 **A stub provider in the box**, so `docker compose up` is a working demo rather
 than a login screen, and so the test suite needs no key.
@@ -334,6 +404,7 @@ identical and teaches nothing.
 ## Future work
 
 - Anthropic Claude provider and side-by-side multi-model comparison
+- Local-model quality benchmarking, to quantify the self-hosted quality trade-off
 - SSO (Entra ID / Okta) replacing local JWT
 - Streaming responses and a job queue for long benchmark runs
 - Retrieval-grounded workflows, so groundedness applies to a document corpus

@@ -42,6 +42,52 @@ warning the user must acknowledge rather than a block — blocking every email
 address would stop ordinary work and train people to route around the platform,
 which is worse for safety than a warning they read.
 
+## Where inference happens
+
+Detection reduces accidental exposure. Self-hosting removes the egress. The
+platform treats the data-classification ceiling as a property of the provider,
+not only of the workflow.
+
+| Provider | Data stays in-house | Max classification | Moderation |
+|---|---|---|---|
+| `openai` | No — egress | CONFIDENTIAL | Available |
+| `local` (Ollama, LM Studio, llama.cpp, vLLM) | Yes | RESTRICTED | **None** |
+| `stub` | Yes (offline fixtures) | RESTRICTED | Keyword screen only |
+
+The limit applied to a request is the **stricter** of the two. A workflow
+cleared for RESTRICTED data is still blocked at CONFIDENTIAL when routed to a
+hosted provider, and the block message says which limit applied and why. A
+self-hosted provider never *loosens* a workflow that is approved for less.
+
+These are declared capabilities on the provider class. The governance code
+reads them; it does not test for vendor names.
+
+### The cost of self-hosting: no moderation
+
+Local runtimes have no moderation endpoint. This is a real control gap
+introduced by the privacy gain, and the platform is built so it cannot be
+hidden:
+
+1. `ModerationResult.available` separates **"not checked"** from **"checked and
+   clean"**. A provider with no endpoint cannot return a result that looks like
+   a pass.
+2. The safety dimension is dropped from the weighted score and the remaining
+   weights renormalised. Awarding full safety marks for a check that never ran
+   would inflate the score of exactly the configuration deserving most scrutiny.
+3. `MODERATION_PROVIDER` delegates the check to a provider that can perform it —
+   generate locally, moderate elsewhere.
+4. `MODERATION_FAIL_CLOSED=true` rejects input nobody could check. Off by
+   default so the offline demo runs; on is what a regulated deployment chooses.
+5. The execution UI shows **Safety NOT CHECKED** in amber with the reason, and
+   the governance screen lists each provider's moderation capability.
+
+### Independent evaluation
+
+`EVALUATION_PROVIDER` is configured separately from `AI_PROVIDER`. A model
+grading its own output shows self-preference bias; judging with a different
+provider is a cheap mitigation. It also allows sensitive output to be evaluated
+on self-hosted infrastructure while generation stays hosted, or the reverse.
+
 ## The pre-execution pipeline
 
 ```
@@ -123,4 +169,5 @@ Being explicit about what a prototype does not do is part of the point:
 - No retention policy or scheduled deletion of execution history
 - No bias testing of the workflows themselves
 - No red-team exercise beyond the handful of adversarial benchmark cases
+- No moderation model for self-hosted deployments; the gap is surfaced, not closed
 - No incident process for a bad output that reached a customer

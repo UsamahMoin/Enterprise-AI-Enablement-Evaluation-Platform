@@ -81,6 +81,45 @@ there.
 Dimensions that are not applicable are removed and the remaining weights
 renormalised, so an N/A never silently behaves like a zero.
 
+## Who judges
+
+`EVALUATION_PROVIDER` is separate from `AI_PROVIDER`, and pointing them at
+different providers is deliberate.
+
+**Self-preference bias.** A model asked to grade its own output rates it more
+highly than an equivalent output from elsewhere. Using the same provider for
+generation and judging builds that bias into every score on the dashboard.
+Judging with a different provider does not eliminate it, but it stops the
+evaluation and the thing being evaluated from sharing a single set of blind
+spots.
+
+**Data boundaries.** The judge receives the full output and any reference
+material — often the most sensitive text in the whole request. Routing
+evaluation to a self-hosted model keeps that inside the network even when
+generation happens elsewhere. The reverse is also valid: generate locally for
+privacy, judge with a stronger hosted model for reliability.
+
+**The trade-off is real.** Smaller self-hosted models are measurably worse at
+strict structured output, which the judge depends on. The local provider
+therefore requests `json_object` with the schema described in the prompt rather
+than strict `json_schema`, and `judge_output` already degrades to "scores
+omitted" rather than inventing numbers when a response will not parse. The
+execution record stores which provider judged it, so scores from different
+judges are never silently pooled.
+
+## Safety, and what happens when it cannot be checked
+
+Safety is a scored dimension, but only when a moderation check actually ran.
+Self-hosted runtimes have no moderation endpoint, so:
+
+- `safety_checked = false` is stored on the evaluation
+- the safety weight is dropped and the remaining weights renormalised
+- the UI shows **NOT CHECKED**, not a pass
+
+An unchecked run therefore cannot outscore one that was checked and passed,
+which is the property that matters: the scoring must never reward turning a
+control off.
+
 ## Level 3 — human review
 
 Approve / needs editing / reject, plus an optional 1–5 rating and comment.

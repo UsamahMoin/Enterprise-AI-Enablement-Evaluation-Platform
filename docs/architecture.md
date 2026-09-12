@@ -14,6 +14,7 @@ flowchart TD
     BE --> AN[Analytics service]
 
     AI --> OAI[OpenAI<br/>Responses + Moderations]
+    AI --> LOC[Local<br/>Ollama / LM Studio / vLLM]
     AI -. later .-> ANT[Anthropic Claude]
     AI --> STUB[Stub provider<br/>offline fixtures]
 
@@ -84,6 +85,22 @@ enforces, so `/docs` cannot drift from the implementation.
 Anthropic Claude is a subclass and a factory entry, and the evaluation history
 stays comparable because cost, latency and token counts are recorded against a
 named provider and model.
+
+**Providers declare capabilities; governance reads them.** Providers are not
+interchangeable in the ways governance cares about — one keeps data in-house but
+cannot moderate, another moderates well but is an egress of data. So each
+declares `max_data_classification`, `supports_moderation` and
+`keeps_data_in_house`, and the policy engine reads those declarations instead of
+testing for vendor names. `LocalProvider` also proves the abstraction is real
+rather than asserted: it speaks Chat Completions rather than the Responses API,
+and describes JSON schemas in the prompt rather than enforcing them strictly,
+because small models comply with the looser form far more reliably.
+
+**Generation, evaluation and moderation are routed independently.**
+`AI_PROVIDER`, `EVALUATION_PROVIDER` and `MODERATION_PROVIDER` are separate
+settings, and a workflow version can pin its own provider. That is what makes
+"generate on a self-hosted model, moderate and judge elsewhere" a configuration
+rather than a fork.
 
 **A stub provider in the box.** `AI_PROVIDER=stub` returns deterministic
 fixtures derived from the input. The entire platform — execution, governance,

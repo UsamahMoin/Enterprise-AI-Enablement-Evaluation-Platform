@@ -27,10 +27,20 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
       EVALUATION_MODEL: ${EVALUATION_MODEL:-gpt-4.1-mini}
+      EVALUATION_PROVIDER: ${EVALUATION_PROVIDER:-}
+      # host.docker.internal reaches a model server running on the host, which
+      # is where Ollama and LM Studio normally live.
+      LOCAL_AI_BASE_URL: ${LOCAL_AI_BASE_URL:-http://host.docker.internal:11434/v1}
+      LOCAL_AI_MODEL: ${LOCAL_AI_MODEL:-qwen3:8b}
+      LOCAL_AI_API_KEY: ${LOCAL_AI_API_KEY:-}
+      MODERATION_PROVIDER: ${MODERATION_PROVIDER:-}
+      MODERATION_FAIL_CLOSED: ${MODERATION_FAIL_CLOSED:-false}
       APP_ENV: ${APP_ENV:-development}
       SEED_ON_STARTUP: "true"
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
